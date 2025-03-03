@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../css/chatting.css">
+    <title>Chatting</title>
+</head>
+
+<body>
+<audio id="chatring" src="../audio/ring.mp3" style="display: none;"></audio>
+<div class="chat_window">
+    <div class="top_menu">
+        <div class="buttons">
+            <div class="button close"></div>
+            <div class="button minimize"></div>
+            <div class="button maximize"></div>
+        </div>
+        <div class="title">Chat</div>
+    </div>
+    <ul class="messages"></ul>
+    <div class="bottom_wrapper clearfix">
+        <div class="message_input_wrapper" ondrop="drop(event)" ondragenter="dragenter(event)"
+             ondragover="dragover(event)">
+            <input class="message_input" placeholder="Type your message here..."/>
+        </div>
+        <div class="send_message">
+            <div class="icon"></div>
+            <div class="text">Send</div>
+        </div>
+    </div>
+</div>
+<div class="message_template">
+    <li class="message">
+        <div class="avatar"></div>
+        <div class="text_wrapper">
+            <div class="text"></div>
+        </div>
+    </li>
+</div>
+</body>
+<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+<script>
+    var imgDataURI = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAQAAADZc7J/AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAAmJLR0QAAKqNIzIAAAAJcEhZcwAADdcAAA3XAUIom3gAAAAHdElNRQfhCh4GIxalSuQIAAACiklEQVRIx5XVS2jUVxTH8c+MEYOJbQg+mjRalFqpoNRAfWB9IEXREi2IuLG4KLYUi5SCm0JFFxW6cS+ibqINRXQTfNDaikpbA4KJRsEsBgxtHCnFTZjYMTkuMpmZTP4mk/Pf/M/vnu85995zuTclyepsscNyTZowYMBDl/1mUBW2zHlDIuEbct6yyvDUOK/RCfvMQNYVtw3IYoEmH9luAYa1+9Z/ybVXyQihz9aKxKOltuoTQsaqJLxNTsg7rva1y6t1XF7IaascWm1Q6LJyyj1aqUsYtLpcbJEVbplVzS6b5ZaQ1VKSOoTHGqvCRzf7sdAx5q4XwoaqcdgghPWjzjWhfVo4tAvXYK68sCIxaLYffDNOabCx8LdCyJvLAeFRIt7srjCsvqh8oF/YUvAeCQfS1qIzAW/VpRVpNQVll9taZNwr+J1Ym9aMzAT8Uze97WmZcthFdf6wpniQM2imW9hZgR82LPzpPSE0mOm0ENrHnZSdQjc9FQnGgn9Sq0EIS9wQRnxfUaZNuE+ncKgoNvpdCMekKCR4IuTsnbDMr4SrNfqxuNikvyz1wufOlQUulLXLnQkJFuOf0TwPC9LHwrOx84V6I0KPRYlt7hW+ZJ680ArStntrXNBRp8xJxJcLL82HK8JJ07Uzwq+ldgxbNy38QyPC5jH3ktA7yU1UaXP0CBdKQrPnwi9mV4XXuCr8651y8RNDwo0qUrzrupAr61XBtskJX08Kz/SdnPDC7qThTTq8Pwm+0QMh9FtTElOJoS0OqpeRkZEvPCw7LEL42SHPJptmnWMGE5+2vIuvubnK5rPf30LodtZ1fYb874k7ztrjzakbdEQIWV9IF1OmpsZK9pmsH70xHeQVs0btYVvk5OsAAAAldEVYdGRhdGU6Y3JlYXRlADIwMTctMTAtMzBUMDY6MzU6MjIrMDE6MDCbdQLkAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDE3LTEwLTMwVDA2OjM1OjIyKzAxOjAw6ii6WAAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAAASUVORK5CYII=';
+    // var Message;
+    // Message = function (arg) {
+    //     this.text = arg.text, this.message_side = arg.message_side; this.from = arg.from; this.fileInfo = arg.fileInfo;
+    //     this.draw = function (_this) {
+    //         return function () {
+    //             var $message;
+    //             $message = $($('.message_template').clone().html());
+
+    //             if (_this.from != null) {
+    //                 $message.find('.text_wrapper').click(function () {
+    //                     $(".message_input").val('/귓속말 ' + _this.from + " ");
+    //                     $(".message_input").focus();
+    //                 });
+    //             }
+
+    //             $message.addClass(_this.message_side).find('.text').html(_this.text);
+
+
+    //             $('.messages').append($message);
+    //             return setTimeout(function () {
+    //                 return $message.addClass('appeared');
+    //             }, 0);
+    //         };
+    //     }(this);
+    //     return this;
+    // };
+
+    class Message {
+        constructor({text, message_side, from, fileInfo}) {
+            this.text = text;
+            this.message_side = message_side;
+            this.from = from;
+            this.fileInfo = fileInfo;
+            this.draw = this.draw.bind(this);
+        }
+
+        draw() {
+            var $message;
+            $message = $($('.message_template').clone().html());
+
+            if (this.from != null) {
+                $message.find('.text_wrapper').click(function () {
+                    $(".message_input").val('/귓속말 ' + this.from + " ");
+                    $(".message_input").focus();
+                });
+            }
+            $message.addClass(this.message_side).find('.text').html(this.text);
+
+            $('.messages').append($message);
+            return setTimeout(function () {
+                return $message.addClass('appeared');
+            }, 0);
+        }
+    }
+
+
+    const showMessage = function (arg) {
+        var $messages, message;
+
+        $('.message_input').val('');
+        $messages = $('.messages');
+        // message_side = 'left';
+        message = new Message(arg);
+        message.draw();
+        return $messages.animate({scrollTop: $messages.prop('scrollHeight')}, 300);
+    };
+    $('.send_message').click(function (e) {
+        return send($('.message_input').val());
+    });
+    $('.message_input').keyup(function (e) {
+        if (e.which === 13) {
+            return send($('.message_input').val());
+        }
+    });
+
+
+    ///////////////////////////////
+    var getParameter = function (param) {
+        var returnValue;
+        var url = location.href;
+        var parameters = (url.slice(url.indexOf('?') + 1, url.length)).split('&');
+        for (var i = 0; i < parameters.length; i++) {
+            var varName = parameters[i].split('=')[0];
+            if (varName.toUpperCase() == param.toUpperCase()) {
+                returnValue = parameters[i].split('=')[1];
+                return decodeURIComponent(returnValue);
+            }
+        }
+    };
+
+    //websocket 클래스 이름
+    var id = getParameter("id");
+    var webSocket = new WebSocket("ws://localhost:8081/ws");
+    var messageTextArea = document.getElementById("messageTextArea");
+    //웹 소켓에서 메시지가 날라왔을 때 호출되는 이벤트
+    webSocket.onmessage = function (message) {
+        console.log(message);
+        console.log("데이터 타입 : " + typeof message.data);
+        if (message.data instanceof Blob || message.data instanceof ArrayBuffer) {
+            binaryWebSocketFrame(message);
+        }
+        if (typeof message.data == "string") {
+            textWebsocketFrame(message);
+        }
+
+    };
+
+    function binaryWebSocketFrame(message) {
+        var file = message.data;
+        var url = URL.createObjectURL(file);
+
+        console.log("데이터 크기 : " + file.size + " 다운로드 URL : " + url + " 이름 : " + file.name + " 타입 : " + file.type);
+        var anchor = $('<a/>', {
+            download: "temp.exe",
+            href: url
+        });
+        $('.text_wrapper').append(anchor);
+        anchor.trigger('click');
+        anchor.click();
+    }
+
+    var notify;
+
+    function textWebsocketFrame(message) {
+        var jsonMessage = JSON.parse(message.data);
+        if (jsonMessage.mode == "general") {
+            if (jsonMessage.id == id) {
+                showMessage({
+                    text: jsonMessage.message,
+                    message_side: "right"
+                });
+
+            } else {
+                showMessage({
+                    text: jsonMessage.message,
+                    message_side: "left",
+                    from: jsonMessage.id
+                });
+            }
+        } else if (jsonMessage.mode == "whisper") {
+            jsonMessage.message = "from " + jsonMessage.from + ":" + jsonMessage.message;
+            showMessage(jsonMessage.message, "whisper", jsonMessage.from);
+            showMessage({
+                text: jsonMessage.message,
+                message_side: "whisper",
+                from: jsonMessage.from
+            });
+        } else if (jsonMessage.mode == "notify") {
+            showMessage({
+                text: jsonMessage.message,
+                message_side: "left"
+            });
+        } else if (jsonMessage.mode == "fileUploadComplete") {
+            fileUploadComplete(jsonMessage);
+        } else {
+            console.log("지원하지 않는 형식");
+            console.log(jsonMessage);
+            return;
+        }
+        if (notify != null)
+            notify(message);
+    }
+
+    function fileUploadComplete(jsonMessage) {
+        console.log(jsonMessage.fileUploader + ':' + jsonMessage.fileName + ' <a download="' + jsonMessage.fileName + '" href="/?mode=fileDownload&fileUploader=' + jsonMessage.fileUploader + '&fileName=' + jsonMessage.fileName + '&requester= ' + id + '">다운로드</a>');
+        var arg = {
+            text: jsonMessage.fileUploader + ':' + jsonMessage.fileName + '  &nbsp;<a download="' + jsonMessage.fileName + '" href="/?mode=fileDownload&fileUploader=' + jsonMessage.fileUploader + '&fileName=' + jsonMessage.fileName + '&requester= ' + id + '"><img src="../image/download.png" style="height:30px;width:auto"></a>',
+            message_side: "left",
+            fileInfo: jsonMessage
+        }
+        showMessage(arg);
+    }
+
+    //웹 소켓이 연결되었을 때 호출되는 이벤트
+    webSocket.onopen = function (message) {
+        webSocket.send(JSON.stringify({
+            "mode": "firstConnect",
+            "id": id
+        }));
+        Notification.requestPermission(function (result) {
+
+            // 요청을 거절하면
+            if (result === 'denied') {
+                console.log('Notification Permission denied');
+
+                return;
+            } else {  // 요청을 허용하면
+                console.log('Notification Permission allowed');
+                notify = function (message) {
+                    // 카톡 알림음
+                    document.getElementById('chatring').play();
+
+                    var title;
+                    var jsonMessage = JSON.parse(message.data);
+                    if (jsonMessage.mode == "general") {
+                        title = jsonMessage.id;
+                    } else if (jsonMessage.mode == "whisper") { // 나에게 온 귓속말
+                        title = "귓속말 : " + jsonMessage.from;
+                        jsonMessage.message = "from " + jsonMessage.from + ":" + jsonMessage.message;
+                    } else if (jsonMessage.mode == "notify") {
+                        title = "시스템";
+                    } else if (jsonMessage.mode == "fileUploadComplete") {
+                        title = "파일 : " + jsonMessage.fileName;
+                        jsonMessage.message = "from " + jsonMessage.fileUploader;
+                    }
+
+                    if (document.hasFocus()) return;
+                    var options = {
+                        body: jsonMessage.message,
+                        icon: imgDataURI
+                    }
+                    console.log(options);
+                    // 데스크탑 알림 요청
+
+                    var notification = new Notification(title, options);
+
+                    // 알림창을 클릭했을 경우 입력창으로 포커스
+                    notification.onclick = function (event) {
+                        window.focus();
+                        $(".message_input").focus();
+                        document.getElementsByClassName("message_input")[0].focus();
+                        notification.close();
+                    }
+
+                    window.addEventListener("focus", function () {
+                        notification.close();
+                    });
+
+                    // 알림 후 2초 뒤,
+                    setTimeout(function () {
+                        //알림 메세지 닫기
+                        notification.close();
+                    }, 2000);
+                };
+            }
+        });
+
+    };
+    //웹 소켓이 닫혔을 때 호출되는 이벤트
+    webSocket.onclose = function (message) {
+        console.log("웹소켓 연결 닫힘");
+    };
+    //웹 소켓이 에러가 났을 때 호출되는 이벤트
+    webSocket.onerror = function (message) {
+        console.log("웹소켓 오류 발생");
+    };
+
+    //서버로 메세지를 전송
+    function send(message) {
+        if (message.trim() == "" || message == null) {
+            return;
+        }
+        // 만약 /귓속말 로 시작한다면
+        if (message.indexOf("/귓속말 ") == 0) {
+            var temp = message.slice(5, message.length); // /귓속말 제거
+            var target = temp.slice(0, temp.indexOf(" "));
+            var msg = temp.slice(temp.indexOf(" ") + 1, temp.length);
+            console.log("귓속말 target :" + target);
+            console.log("귓속말 message :" + msg);
+            //웹소켓으로 JSON 값을 보낸다; 귓속말
+            webSocket.send(JSON.stringify({
+                "mode": "whisper",
+                "id": id,
+                "target": target,
+                "message": msg
+            }));
+
+        } else {
+            //웹소켓으로 JSON 값을 보낸다; 전체채팅
+            webSocket.send(JSON.stringify({
+                "mode": "general",
+                "id": id,
+                "message": message
+            }));
+        }
+
+        //textMessage객체의 값 초기화
+        $('.message_input').val("");
+    }
+
+    function drop(e) {
+        e.stopPropagation();
+        e.preventDefault();
+        if (window.confirm("파일을 보내시겠습니까?")) {
+            var file = e.dataTransfer.files[0];
+            console.log(URL.createObjectURL(file));
+
+            var worker = new Worker("fileUpload.js");
+
+            worker.postMessage({
+                id: id,
+                file: file
+            });
+
+        } else {
+            return;
+        }
+    }
+
+
+    function dragenter(e) {
+        e.preventDefault();
+    }
+
+    function dragover(e) {
+        e.preventDefault();
+    }
+
+</script>
+
+</html>

@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../css/chatting.css">
+    <title>Insert title here</title>
+</head>
+
+<body>
+    <audio id="chatring" src="../audio/ring.mp3" style="display: none;"></audio>
+    <div class="chat_window" ondrop="drop(event)" ondragenter="dragenter(event)" ondragover="dragover(event)">
+        <div class="top_menu" ondrop="drop(event)" ondragenter="dragenter(event)" ondragover="dragover(event)">
+            <div class="buttons">
+                <div class="button close"></div>
+                <div class="button minimize"></div>
+                <div class="button maximize"></div>
+            </div>
+            <div class="title">Chat</div>
+        </div>
+        <ul class="messages"></ul>
+        <div class="bottom_wrapper clearfix">
+            <div class="message_input_wrapper">
+                <input class="message_input" placeholder="Type your message here..." />
+            </div>
+            <div class="send_message">
+                <div class="icon"></div>
+                <div class="text">Send</div>
+            </div>
+        </div>
+    </div>
+    <div class="message_template">
+        <li class="message">
+            <div class="avatar"></div>
+            <div class="text_wrapper">
+                <div class="text"></div>
+            </div>
+        </li>
+    </div>
+</body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.js"></script>
+
+<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+<script>
+    var imgDataURI = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAQAAADZc7J/AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAAmJLR0QAAKqNIzIAAAAJcEhZcwAADdcAAA3XAUIom3gAAAAHdElNRQfhCh4GIxalSuQIAAACiklEQVRIx5XVS2jUVxTH8c+MEYOJbQg+mjRalFqpoNRAfWB9IEXREi2IuLG4KLYUi5SCm0JFFxW6cS+ibqINRXQTfNDaikpbA4KJRsEsBgxtHCnFTZjYMTkuMpmZTP4mk/Pf/M/vnu85995zuTclyepsscNyTZowYMBDl/1mUBW2zHlDIuEbct6yyvDUOK/RCfvMQNYVtw3IYoEmH9luAYa1+9Z/ybVXyQihz9aKxKOltuoTQsaqJLxNTsg7rva1y6t1XF7IaascWm1Q6LJyyj1aqUsYtLpcbJEVbplVzS6b5ZaQ1VKSOoTHGqvCRzf7sdAx5q4XwoaqcdgghPWjzjWhfVo4tAvXYK68sCIxaLYffDNOabCx8LdCyJvLAeFRIt7srjCsvqh8oF/YUvAeCQfS1qIzAW/VpRVpNQVll9taZNwr+J1Ym9aMzAT8Uze97WmZcthFdf6wpniQM2imW9hZgR82LPzpPSE0mOm0ENrHnZSdQjc9FQnGgn9Sq0EIS9wQRnxfUaZNuE+ncKgoNvpdCMekKCR4IuTsnbDMr4SrNfqxuNikvyz1wufOlQUulLXLnQkJFuOf0TwPC9LHwrOx84V6I0KPRYlt7hW+ZJ680ArStntrXNBRp8xJxJcLL82HK8JJ07Uzwq+ldgxbNy38QyPC5jH3ktA7yU1UaXP0CBdKQrPnwi9mV4XXuCr8651y8RNDwo0qUrzrupAr61XBtskJX08Kz/SdnPDC7qThTTq8Pwm+0QMh9FtTElOJoS0OqpeRkZEvPCw7LEL42SHPJptmnWMGE5+2vIuvubnK5rPf30LodtZ1fYb874k7ztrjzakbdEQIWV9IF1OmpsZK9pmsH70xHeQVs0btYVvk5OsAAAAldEVYdGRhdGU6Y3JlYXRlADIwMTctMTAtMzBUMDY6MzU6MjIrMDE6MDCbdQLkAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDE3LTEwLTMwVDA2OjM1OjIyKzAxOjAw6ii6WAAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAAASUVORK5CYII=';
+    var Message;
+    Message = function (arg) {
+        this.text = arg.text, this.message_side = arg.message_side; this.from = arg.from;
+        this.draw = function (_this) {
+            return function () {
+                var $message;
+                $message = $($('.message_template').clone().html());
+                
+                if (_this.from != null) {
+                    $message.find('.text_wrapper').click(function () {
+                        $(".message_input").val('/귓속말 '+_this.from+" ");
+                        $(".message_input").focus();
+                    })
+                }
+                $message.addClass(_this.message_side).find('.text').html(_this.text);
+                $('.messages').append($message);
+                return setTimeout(function () {
+                    return $message.addClass('appeared');
+                }, 0);
+            };
+        }(this);
+        return this;
+    };
+    var getMessageText, message_side, sendMessage;
+    message_side = 'right';
+    getMessageText = function () {
+        var $message_input;
+        $message_input = $('.message_input');
+        return $message_input.val();
+    };
+    sendMessage = function (text, message_side, from) {
+        var $messages, message;
+
+        $('.message_input').val('');
+        $messages = $('.messages');
+        // message_side = 'left';
+        message = new Message({
+            text: text,
+            message_side: message_side,
+            from : from
+        });
+        message.draw();
+        return $messages.animate({ scrollTop: $messages.prop('scrollHeight') }, 300);
+    };
+    $('.send_message').click(function (e) {
+        return send(getMessageText());
+    });
+    $('.message_input').keyup(function (e) {
+        if (e.which === 13) {
+            return send(getMessageText());
+        }
+    });
+
+
+
+    ///////////////////////////////
+    var getParameter = function (param) {
+        var returnValue;
+        var url = location.href;
+        var parameters = (url.slice(url.indexOf('?') + 1, url.length)).split('&');
+        for (var i = 0; i < parameters.length; i++) {
+            var varName = parameters[i].split('=')[0];
+            if (varName.toUpperCase() == param.toUpperCase()) {
+                returnValue = parameters[i].split('=')[1];
+                return decodeURIComponent(returnValue);
+            }
+        }
+    };
+
+    //websocket 클래스 이름
+    var id = getParameter("id");
+    var webSocket = new WebSocket("ws://localhost:9000/ws");
+    var messageTextArea = document.getElementById("messageTextArea");
+    //웹 소켓에서 메시지가 날라왔을 때 호출되는 이벤트
+    webSocket.onmessage = function (message) {
+        console.log(message);
+        var jsonMessage = eval("(" + message.data + ")");
+        if (jsonMessage.id == id) {
+            sendMessage(jsonMessage.message, "right");
+        } else if (jsonMessage.from != null) { 
+            jsonMessage.message = "from "+jsonMessage.from +":"+jsonMessage.message;
+            sendMessage(jsonMessage.message, "whisper", jsonMessage.from);
+        } else{
+            sendMessage(jsonMessage.message, "left",jsonMessage.id);
+        }
+        // if (notice != null) {
+        console.log('method 1');
+        // }
+    };
+    //웹 소켓이 연결되었을 때 호출되는 이벤트
+    webSocket.onopen = function (message) {
+        webSocket.send(JSON.stringify({
+            "id": id
+        }));
+        Notification.requestPermission(function (result) {
+
+            // 요청을 거절하면
+            if (result === 'denied') {
+                console.log('Notification Permission denied');
+
+                return;
+            } else {  // 요청을 허용하면
+                console.log('Notification Permission allowed');
+                webSocket.onmessage = function (message) {
+                    // 카톡 알림음
+                    document.getElementById('chatring').play();
+
+                    console.log(message);
+                    console.log('method 2');
+                    var jsonMessage = eval("(" + message.data + ")");
+                    var title = jsonMessage.id;
+                    if (jsonMessage.from != null) {
+                        title = "귓속말 : "+jsonMessage.from;
+                        jsonMessage.message = "from "+jsonMessage.from +":"+jsonMessage.message; 
+                    } else if (jsonMessage.id == null) {
+                        title = "시스템";
+                    }
+                    if (jsonMessage.id == id) {
+                        sendMessage(jsonMessage.message, "right");
+                    } else if (jsonMessage.from != null) { 
+                        sendMessage(jsonMessage.message, "whisper", jsonMessage.from);
+                    } else{
+                        sendMessage(jsonMessage.message, "left", jsonMessage.id);
+                    }
+                    var options = {
+                        body: jsonMessage.message,
+                        icon: imgDataURI
+                    }
+                    console.log(options);
+                    // 데스크탑 알림 요청
+                    
+                    var notification = new Notification(title, options);
+
+                    // 알림창을 클릭했을 경우 입력창으로 포커스
+                    notification.onclick = function (event) {
+                        window.focus();
+                        $(".message_input").focus();
+                        document.getElementsByClassName("message_input")[0].focus();
+                        notification.close();
+                    }
+
+                    // 알림 후 2초 뒤,
+                    setTimeout(function () {
+                        //알림 메세지 닫기
+                        notification.close();
+                    }, 2000);
+                };
+            }
+        });
+
+    };
+    //웹 소켓이 닫혔을 때 호출되는 이벤트
+    webSocket.onclose = function (message) {
+        console.log("웹소켓 연결 닫힘");
+    };
+    //웹 소켓이 에러가 났을 때 호출되는 이벤트
+    webSocket.onerror = function (message) {
+        console.log("웹소켓 오류 발생");
+    };
+
+    //서버로 메세지를 전송
+    function send(message) {
+        if (message.trim() == "" || message == null) {
+            return;
+        }
+        // 만약 /귓속말 로 시작한다면
+        if (message.indexOf("/귓속말 ") == 0) {
+            var temp = message.slice(5, message.length); // /귓속말 제거
+            var target = temp.slice(0, temp.indexOf(" "));
+            var msg = temp.slice(temp.indexOf(" ") + 1, temp.length);
+            console.log("귓속말 target :" + target);
+            console.log("귓속말 message :" + msg);
+            //웹소켓으로 JSON 값을 보낸다; 귓속말
+            webSocket.send(JSON.stringify({
+                "id":id,
+                "target": target,
+                "message": msg
+            }));
+            
+        } else {
+            //웹소켓으로 JSON 값을 보낸다; 전체채팅
+            webSocket.send(JSON.stringify({
+                "id": id,
+                "message": message
+            }));
+        }
+
+        //textMessage객체의 값 초기화
+        $('.message_input').val("");
+    }
+	
+    function drop(e) {
+        e.stopPropagation();
+        e.preventDefault();
+        var file = e.dataTransfer.files[0];
+        webSocket.send("size:"+file.size);
+        webSocket.send(file);
+    }
+
+    function dragenter(e) {
+        e.preventDefault();
+        console.log("dragenter");
+    }
+
+    function dragover(e) {
+        e.preventDefault();
+        console.log("dragover");
+    }
+     
+</script>
+
+</html>
